@@ -2,7 +2,7 @@
 name = "{{ project-name }}"
 version = "0.1.0"
 authors = ["Tyr Chen <tyr.chen@gmail.com>"]
-edition = "2018"
+edition = "2021"
 license = "MIT"
 documentation = "https://docs.rs/"
 repository = "https://github.com/tyrchen/"
@@ -13,7 +13,5 @@ description = """
 readme = "README.md"
 categories = ["development-tools"]
 keywords = []
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
