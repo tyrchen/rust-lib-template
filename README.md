@@ -2,7 +2,7 @@
 
 # {{ project-name }}
 
-description about the crate
+description of the crate
 
 ## How to use it
 
@@ -18,4 +18,4 @@ This project is distributed under the terms of MIT.
 
 See [LICENSE](LICENSE.md) for details.
 
-Copyright 2021 Tyr Chen
+Copyright 2024 Tyr Chen
