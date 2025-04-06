@@ -2,7 +2,7 @@
 name = "{{ project-name }}"
 version = "0.1.0"
 authors = ["Your Name <YourName@yourdomain.com>"]
-edition = "2021"
+edition = "2024"
 license = "MIT"
 documentation = "https://docs.rs/"
 repository = "https://github.com/TODO"

@@ -19,6 +19,19 @@ jobs:
       matrix:
         platform: [ubuntu-latest]
     runs-on: ${{ matrix.platform }}
+    # services:
+    #   postgres:
+    #     image: postgres:14.5
+    #     env:
+    #       POSTGRES_PASSWORD: postgres
+    #     ports:
+    #       - 5432:5432
+    #     # Set health checks to wait until postgres has started
+    #     options: >-
+    #       --health-cmd pg_isready
+    #       --health-interval 10s
+    #       --health-timeout 5s
+    #       --health-retries 5
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,7 +47,7 @@ jobs:
       # - name: Install Protoc
       #   uses: arduino/setup-protoc@v2
       - name: Check code format
-        run: cargo fmt -- --check
+        run: cargo fmt --all -- --check
       - name: Check the package for errors
         run: cargo check --all
       - name: Lint rust sources
