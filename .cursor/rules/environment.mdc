@@ -1,0 +1,46 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# Development Environment Preferences
+
+## Shell
+- Using Nushell as the primary shell
+- Prefer shell-agnostic commands when possible
+- For Nushell-specific syntax, use the appropriate commands and data structures
+
+## Build Systems
+- Prefer Makefiles over shell scripts for build automation
+- Use descriptive targets in Makefiles with proper documentation
+- Implement proper dependency tracking in Makefiles
+
+## Python
+- Use `uv` for Python package management and virtual environments
+- Prefer isolated environments for each project
+- Include proper dependency specifications in requirements files
+
+## Rust
+- Use Cargo for package management and builds
+- Use rustup for toolchain management
+- Follow Rust idioms as specified in rust.mdc
+
+## Version Control
+- Git for version control
+- Use meaningful commit messages and branch names
+- Prefer small, focused commits
+
+## Editor/IDE
+- Using Cursor as the IDE
+- Leverage Cursor-specific features for productivity
+- Follow code organization as specified by other .mdc files
+
+## Containers & Deployment
+- Use dockerfile (podman) for containerization when needed
+- Create optimized multi-stage builds for production containers
+- Document deployment procedures clearly
+
+## Testing
+- Include automated tests for all components
+- Run tests before submitting pull requests
+- Use appropriate testing frameworks for each language
