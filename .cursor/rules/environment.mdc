@@ -1,7 +1,7 @@
 ---
-description:
+description: This describes the environment including shell, build system, etc.
 globs:
-alwaysApply: true
+alwaysApply: false
 ---
 # Development Environment Preferences
 
