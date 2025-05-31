@@ -143,6 +143,28 @@ colored = "2.0"                             # Terminal colors
 console = "0.15"                            # Terminal utilities
 ```
 
+### Configuration Management
+```toml
+figment = { version = "0.10", features = ["yaml", "toml", "env"] }
+notify = "6.0"                              # File watching
+arc-swap = "1.0"                            # Atomic configuration updates
+validator = { version = "0.18", features = ["derive"] }
+```
+
+### Observability
+```toml
+prometheus = "0.13"                         # Metrics collection
+opentelemetry = "0.23"                      # Distributed tracing
+tracing-opentelemetry = "0.23"              # Tracing integration
+dashmap = "6.0"                             # Lock-free concurrent maps
+```
+
+### Frontend Integration
+```toml
+rust-embed = "8.0"                          # Static asset embedding
+mime_guess = "2.0"                          # MIME type detection
+```
+
 ### gRPC/Protobuf
 ```toml
 tonic = { version = "0.13", features = ["transport", "codegen", "prost"] }
@@ -163,6 +185,7 @@ assert_cmd = "2.0"                          # CLI testing
 predicates = "3.0"                          # Test assertions
 axum-test = "15.0"                          # Axum testing
 tokio-test = "0.4"                          # Tokio testing utilities
+temp-env = "0.3"                            # Environment variable testing
 ```
 
 ## 🔧 FEATURE FLAG STRATEGY

@@ -1,6 +1,6 @@
 ---
 description:
-globs: **/Cargo.toml,**/*.rs
+globs: Cargo.toml,*.rs
 alwaysApply: false
 ---
 # 🦀 RUST PROJECT RULE SET SYSTEM
@@ -38,6 +38,8 @@ graph TD
     Features --> GRPC{"gRPC/Protobuf<br>needed?"}
     Features --> Concurrent{"Heavy<br>concurrency?"}
     Features --> Config{"Complex config<br>or templating?"}
+    Features --> Observability{"Metrics & tracing<br>needed?"}
+    Features --> ConfigMgmt{"Dynamic config<br>management?"}
 
     Web -->|Yes| WebRules["Load Axum Rules"]
     DB -->|Yes| DBRules["Load Database Rules"]
@@ -45,6 +47,8 @@ graph TD
     GRPC -->|Yes| GRPCRules["Load Protobuf & gRPC Rules"]
     Concurrent -->|Yes| ConcurrencyRules["Load Concurrency Rules"]
     Config -->|Yes| ToolsRules["Load Tools & Config Rules"]
+    Observability -->|Yes| ObservabilityRules["Load Observability Rules"]
+    ConfigMgmt -->|Yes| ConfigMgmtRules["Load Configuration Rules"]
 
     style Start fill:#4da6ff,stroke:#0066cc,color:white
     style Complex fill:#d94dbb,stroke:#a3378a,color:white
@@ -100,6 +104,8 @@ graph TD
     FeatureDetection --> GRPCFeature{"gRPC/Protobuf?"}
     FeatureDetection --> SerdeFeature{"Serialization?"}
     FeatureDetection --> BuilderFeature{"Complex Types?"}
+    FeatureDetection --> ObservabilityFeature{"Metrics & Tracing?"}
+    FeatureDetection --> ConfigFeature{"Dynamic Config?"}
 
     WebFeature -->|Yes| AxumRules["Axum Framework Rules"]
     DBFeature -->|Yes| SQLxRules["SQLx Database Rules"]
@@ -107,6 +113,8 @@ graph TD
     GRPCFeature -->|Yes| GRPCRules["Protobuf & gRPC Rules"]
     SerdeFeature -->|Yes| SerdeRules["Serde Best Practices"]
     BuilderFeature -->|Yes| TypedBuilderRules["TypedBuilder Rules"]
+    ObservabilityFeature -->|Yes| ObservabilityRules["Observability Rules"]
+    ConfigFeature -->|Yes| ConfigurationRules["Configuration Rules"]
 
     style Main fill:#4da6ff,stroke:#0066cc,color:white
     style Core fill:#ffa64d,stroke:#cc7a30,color:white
@@ -183,6 +191,22 @@ sequenceDiagram
 - [ ] Background task processing
 - [ ] → Load Concurrency rules if YES to any
 
+### Configuration Management Requirements
+- [ ] Dynamic configuration reloading needed
+- [ ] Multi-format config support (YAML/TOML/JSON)
+- [ ] Configuration validation required
+- [ ] Environment-based configuration overrides
+- [ ] File system watching for config changes
+- [ ] → Load Configuration rules if YES to any
+
+### Observability Requirements
+- [ ] Metrics collection needed
+- [ ] Performance monitoring required
+- [ ] Distributed tracing needed
+- [ ] Health checks for dependencies
+- [ ] Prometheus integration required
+- [ ] → Load Observability rules if YES to any
+
 ### Tools & Configuration Requirements
 - [ ] Complex configuration files
 - [ ] Template rendering needed
@@ -253,6 +277,8 @@ Based on project analysis, load specific rule sets:
 # Database: core + sqlx + utilities (error handling)
 # CLI: core + cli + utilities (enum_dispatch + error handling)
 # gRPC: core + protobuf-grpc + utilities (typed_builder + sanitization)
+# Config Management: core + configuration + observability (metrics)
+# Service Applications: core + configuration + observability + utilities
 # Auth: core + utilities (JWT + validation)
 ```
 
@@ -274,6 +300,8 @@ Based on project analysis, load specific rule sets:
 | **CLI** | `features/cli.mdc` | Clap 4.0+ patterns, subcommands, enum_dispatch |
 | **Protobuf & gRPC** | `features/protobuf-grpc.mdc` | Prost/Tonic 0.13+, Inner types, MessageSanitizer, reflection |
 | **Concurrency** | `features/concurrency.mdc` | Tokio, DashMap, async patterns |
+| **Configuration** | `features/configuration.mdc` | Multi-format config, hot-reloading, validation patterns |
+| **Observability** | `features/observability.mdc` | Metrics collection, distributed tracing, health checks |
 | **Tools & Config** | `features/tools-and-config.mdc` | Tracing, YAML config, MiniJinja templates |
 | **Utilities** | `features/utilities.mdc` | JWT auth, CLI tools, builders, enhanced derives |
 | **HTTP Client** | `features/http-client.mdc` | reqwest patterns, error handling, retry logic |
@@ -295,6 +323,8 @@ Based on project analysis, load specific rule sets:
 - **Enterprise applications** (multiple domains)
 - **Database systems** with multiple engines
 - **Distributed systems** with event processing
+- **Production services** (requiring metrics, health checks, config reloading)
+- **High-availability applications** (with observability and dynamic configuration)
 
 ## 🚀 MODERN RUST STACK PREFERENCES
 
@@ -323,7 +353,17 @@ Based on real-world experience, these are the recommended tools:
 - **Templates**: `minijinja` (never `handlebars`)
 - **Data Extraction**: `jsonpath-rust`
 
-### Observability
+### Configuration Management
+- **Multi-format Config**: `figment` with YAML/TOML/JSON support
+- **Configuration Validation**: `validator` for compile-time guarantees
+- **Hot Reloading**: `arc-swap` + `notify` for atomic updates
+- **Environment Overrides**: Always use environment variable precedence
+
+### Observability & Monitoring
+- **Metrics Collection**: `prometheus` + lock-free atomic counters
+- **Distributed Tracing**: `opentelemetry` + `tracing-opentelemetry`
+- **Health Checks**: Custom health check frameworks with timeout handling
+- **Concurrent Metrics**: `dashmap` for lock-free metrics storage
 - **Logging**: `tracing` + `tracing-subscriber` (never `env_logger`)
 - **Structured Logging**: Always use `#[instrument]` and context
 - **Log Rotation**: `tracing-appender` for production

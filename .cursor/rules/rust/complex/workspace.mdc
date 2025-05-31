@@ -40,66 +40,111 @@ graph TD
     style LayeredArch fill:#d94dbb,stroke:#a3378a,color:white
 ```
 
-## 🏗️ SUBSYSTEM-BASED WORKSPACE ARCHITECTURE
+## 🏗️ SERVICE-ORIENTED WORKSPACE ARCHITECTURE
 
 ```mermaid
 graph TD
-    Workspace["E-Commerce Platform Workspace"] --> Shared["Shared Infrastructure"]
-    Workspace --> UserMgmt["User Management<br/>Subsystem"]
-    Workspace --> ProductCatalog["Product Catalog<br/>Subsystem"]
-    Workspace --> OrderMgmt["Order Management<br/>Subsystem"]
-    Workspace --> Payment["Payment<br/>Subsystem"]
-    Workspace --> Notification["Notification<br/>Subsystem"]
-    Workspace --> Analytics["Analytics<br/>Subsystem"]
-    Workspace --> Gateway["API Gateway<br/>& Services"]
+    Workspace["Service Platform Workspace"] --> Shared["Shared Infrastructure"]
+    Workspace --> CoreServices["Core Services"]
+    Workspace --> BusinessServices["Business Services"]
+    Workspace --> PlatformServices["Platform Services"]
 
     Shared --> SharedTypes["shared-types<br/>(domain primitives)"]
-    Shared --> SharedDb["shared-db<br/>(database infrastructure)"]
     Shared --> SharedConfig["shared-config<br/>(configuration)"]
-    Shared --> SharedEvents["shared-events<br/>(event definitions)"]
+    Shared --> SharedObservability["shared-observability<br/>(metrics & tracing)"]
 
-    UserMgmt --> UserCore["user-core<br/>(business logic)"]
-    UserMgmt --> UserApi["user-api<br/>(HTTP handlers)"]
-    UserMgmt --> UserWorker["user-worker<br/>(background jobs)"]
+    CoreServices --> ServiceCore["service-core<br/>(business logic)"]
+    CoreServices --> ServiceApi["service-api<br/>(HTTP handlers)"]
+    CoreServices --> ServiceWorker["service-worker<br/>(background jobs)"]
 
-    ProductCatalog --> ProductCore["product-core<br/>(business logic)"]
-    ProductCatalog --> ProductApi["product-api<br/>(HTTP handlers)"]
-    ProductCatalog --> ProductSearch["product-search<br/>(search service)"]
+    BusinessServices --> BusinessCore["business-core<br/>(domain logic)"]
+    BusinessServices --> BusinessApi["business-api<br/>(API endpoints)"]
+    BusinessServices --> BusinessProcessor["business-processor<br/>(workflow engine)"]
 
-    OrderMgmt --> OrderCore["order-core<br/>(business logic)"]
-    OrderMgmt --> OrderApi["order-api<br/>(HTTP handlers)"]
-    OrderMgmt --> OrderProcessor["order-processor<br/>(workflow engine)"]
-
-    Payment --> PaymentCore["payment-core<br/>(business logic)"]
-    Payment --> PaymentApi["payment-api<br/>(HTTP handlers)"]
-    Payment --> PaymentGateway["payment-gateway<br/>(external integrations)"]
-
-    Notification --> NotificationCore["notification-core<br/>(business logic)"]
-    Notification --> NotificationService["notification-service<br/>(delivery engine)"]
-
-    Analytics --> AnalyticsCore["analytics-core<br/>(business logic)"]
-    Analytics --> AnalyticsCollector["analytics-collector<br/>(data collection)"]
-    Analytics --> AnalyticsReporter["analytics-reporter<br/>(reporting service)"]
-
-    Gateway --> ApiGateway["api-gateway<br/>(unified API)"]
-    Gateway --> AdminCli["admin-cli<br/>(administration tool)"]
-    Gateway --> MigrationTool["migration-tool<br/>(database migrations)"]
+    PlatformServices --> Gateway["gateway<br/>(API gateway)"]
+    PlatformServices --> AdminPanel["admin-panel<br/>(administration)"]
+    PlatformServices --> HealthMonitor["health-monitor<br/>(monitoring)"]
 
     style Workspace fill:#4da6ff,stroke:#0066cc,color:white
     style Shared fill:#4dbb5f,stroke:#36873f,color:white
-    style UserMgmt fill:#ffa64d,stroke:#cc7a30,color:white
-    style ProductCatalog fill:#d94dbb,stroke:#a3378a,color:white
-    style OrderMgmt fill:#4dbbbb,stroke:#368787,color:white
-    style Payment fill:#ff6b6b,stroke:#cc5555,color:white
-    style Notification fill:#9b59b6,stroke:#7d4796,color:white
-    style Analytics fill:#f39c12,stroke:#d68910,color:white
-    style Gateway fill:#2ecc71,stroke:#27ae60,color:white
+    style CoreServices fill:#ffa64d,stroke:#cc7a30,color:white
+    style BusinessServices fill:#d94dbb,stroke:#a3378a,color:white
+    style PlatformServices fill:#9b59b6,stroke:#7d4796,color:white
 ```
 
-## 📁 SUBSYSTEM-BASED DIRECTORY STRUCTURE
+## 🔄 SERVICE CONFIGURATION MANAGEMENT
+
+### Hot-Reloadable Service Architecture
+```rust
+use arc_swap::ArcSwap;
+use std::sync::Arc;
+use tokio::sync::broadcast;
+
+// ✅ Service-oriented architecture with shared state
+pub struct ServiceManager<T> {
+    config: Arc<ArcSwap<T>>,
+    components: Vec<Arc<dyn ServiceComponent>>,
+    config_tx: broadcast::Sender<Arc<T>>,
+}
+
+impl<T> ServiceManager<T>
+where
+    T: Clone + Send + Sync + 'static,
+{
+    pub fn new(initial_config: T) -> Self {
+        let (config_tx, _) = broadcast::channel(16);
+
+        Self {
+            config: Arc::new(ArcSwap::from_pointee(initial_config)),
+            components: Vec::new(),
+            config_tx,
+        }
+    }
+
+    pub fn add_component(&mut self, component: Arc<dyn ServiceComponent>) {
+        self.components.push(component);
+    }
+
+    pub fn update_config(&self, new_config: T) {
+        let new_config = Arc::new(new_config);
+        self.config.store(new_config.clone());
+
+        // Notify all components of config change
+        for component in &self.components {
+            component.on_config_update();
+        }
+
+        // Broadcast to subscribers
+        let _ = self.config_tx.send(new_config);
+    }
+
+    pub fn get_config(&self) -> Arc<T> {
+        self.config.load_full()
+    }
+
+    pub fn subscribe_to_config_changes(&self) -> broadcast::Receiver<Arc<T>> {
+        self.config_tx.subscribe()
+    }
+}
+
+pub trait ServiceComponent: Send + Sync {
+    fn on_config_update(&self);
+    fn service_name(&self) -> &str;
+    fn health_check(&self) -> ServiceHealth;
+}
+
+#[derive(Debug, Clone)]
+pub enum ServiceHealth {
+    Healthy,
+    Degraded { reason: String },
+    Unhealthy { reason: String },
+}
+```
+
+## 📁 SERVICE-ORIENTED DIRECTORY STRUCTURE
 
 ```
-ecommerce-platform/
+service-platform/
 ├── Cargo.toml                 # Workspace configuration
 ├── Cargo.lock                 # Locked dependencies
 ├── README.md                   # Platform overview
@@ -111,98 +156,81 @@ ecommerce-platform/
 │   │   ├── Cargo.toml
 │   │   └── src/
 │   │       ├── lib.rs
-│   │       ├── ids.rs         # UserId, ProductId, OrderId etc.
-│   │       ├── money.rs       # Money, Currency types
-│   │       ├── address.rs     # Address, Location types
-│   │       ├── time.rs        # Timestamp, DateRange types
-│   │       └── pagination.rs  # Pagination, Sorting types
-│   │
-│   ├── shared-db/             # Database infrastructure
-│   │   ├── Cargo.toml
-│   │   └── src/
-│   │       ├── lib.rs
-│   │       ├── connection.rs  # Connection pooling
-│   │       ├── transactions.rs # Transaction management
-│   │       ├── migrations.rs  # Migration framework
-│   │       └── repositories/  # Base repository traits
+│   │       ├── ids.rs         # EntityId, RequestId types
+│   │       ├── time.rs        # Timestamp, Duration types
+│   │       ├── pagination.rs  # Pagination, Sorting types
+│   │       └── validation.rs  # Common validation rules
 │   │
 │   ├── shared-config/         # Configuration management
 │   │   ├── Cargo.toml
 │   │   └── src/
 │   │       ├── lib.rs
+│   │       ├── service.rs     # Service configuration
 │   │       ├── database.rs    # Database configuration
-│   │       ├── redis.rs       # Redis configuration
-│   │       ├── auth.rs        # Auth configuration
-│   │       └── services.rs    # Service discovery
+│   │       ├── observability.rs # Metrics & tracing config
+│   │       └── environment.rs # Environment-specific settings
 │   │
-│   └── shared-events/         # Event definitions & messaging
+│   └── shared-observability/  # Metrics & tracing infrastructure
 │       ├── Cargo.toml
 │       └── src/
 │           ├── lib.rs
-│           ├── user_events.rs    # UserRegistered, UserUpdated
-│           ├── order_events.rs   # OrderPlaced, OrderFulfilled
-│           ├── payment_events.rs # PaymentProcessed, PaymentFailed
-│           └── event_bus.rs      # Event publishing infrastructure
+│           ├── metrics.rs     # Metrics collection patterns
+│           ├── tracing.rs     # Distributed tracing setup
+│           ├── health.rs      # Health check framework
+│           └── middleware.rs  # Observability middleware
 │
-├── subsystems/                # Business subsystems
-│   ├── user-management/       # User & Authentication subsystem
-│   │   ├── user-core/         # Business logic
+├── services/                  # Business services
+│   ├── core-services/         # Core business logic services
+│   │   ├── service-core/      # Core business logic
 │   │   │   ├── Cargo.toml
 │   │   │   └── src/
 │   │   │       ├── lib.rs
-│   │   │       ├── entities/    # User, Profile, Session
-│   │   │       ├── services/    # AuthService, ProfileService
-│   │   │       ├── repositories/ # UserRepository trait
+│   │   │       ├── entities/    # Core domain entities
+│   │   │       ├── services/    # Business service implementations
+│   │   │       ├── repositories/ # Repository trait definitions
 │   │   │       └── errors.rs
 │   │   │
-│   │   ├── user-api/          # HTTP API handlers
+│   │   ├── service-api/       # HTTP API handlers
 │   │   │   ├── Cargo.toml
 │   │   │   └── src/
 │   │   │       ├── lib.rs
-│   │   │       ├── handlers/    # Auth, profile endpoints
-│   │   │       ├── middleware/  # Auth middleware
+│   │   │       ├── handlers/    # HTTP endpoint handlers
+│   │   │       ├── middleware/  # API middleware
 │   │   │       ├── dto/        # Request/response DTOs
 │   │   │       └── validation.rs
 │   │   │
-│   │   └── user-worker/       # Background jobs
+│   │   └── service-worker/    # Background processing
 │   │       ├── Cargo.toml
 │   │       └── src/
 │   │           ├── main.rs
-│   │           ├── jobs/       # Email verification, cleanup
-│   │           └── handlers.rs
+│   │           ├── jobs/       # Background job definitions
+│   │           └── processors.rs
 │   │
-│   ├── product-catalog/       # Product management subsystem
-│   │   ├── product-core/      # Business logic
+│   ├── business-services/     # Business-specific services
+│   │   ├── business-core/     # Business domain logic
 │   │   │   ├── Cargo.toml
 │   │   │   └── src/
 │   │   │       ├── lib.rs
-│   │   │       ├── entities/    # Product, Category, Inventory
-│   │   │       ├── services/    # ProductService, InventoryService
-│   │   │       ├── repositories/
+│   │   │       ├── entities/    # Business domain entities
+│   │   │       ├── services/    # Business logic services
+│   │   │       ├── workflows/   # Business process workflows
 │   │   │       └── errors.rs
 │   │   │
-│   │   ├── product-api/       # HTTP API handlers
+│   │   ├── business-api/      # Business API endpoints
 │   │   │   ├── Cargo.toml
 │   │   │   └── src/
 │   │   │       ├── lib.rs
-│   │   │       ├── handlers/    # Product CRUD, search
-│   │   │       ├── dto/
-│   │   │       └── filters.rs
+│   │   │       ├── handlers/    # Business endpoint handlers
+│   │   │       ├── dto/        # Business DTOs
+│   │   │       └── validators.rs
 │   │   │
-│   │   └── product-search/    # Search engine service
+│   │   └── business-processor/ # Business workflow engine
 │   │       ├── Cargo.toml
 │   │       └── src/
 │   │           ├── lib.rs
-│   │           ├── indexing/    # ElasticSearch integration
-│   │           ├── queries/     # Search query builders
-│   │           └── ranking.rs   # Relevance scoring
-│   │
-│   ├── order-management/      # Order processing subsystem
-│   │   ├── order-core/        # Business logic
-│   │   │   ├── Cargo.toml
-│   │   │   └── src/
-│   │   │       ├── lib.rs
-│   │   │       ├── entities/    # Order, OrderItem, Cart
+│   │           ├── workflows/   # Workflow definitions
+│   │           ├── steps/       # Workflow step implementations
+│   │           └── executor.rs  # Workflow execution engine
 │   │   │       ├── services/    # OrderService, CartService
 │   │   │       ├── state_machine/ # Order state transitions
 │   │   │       ├── repositories/
