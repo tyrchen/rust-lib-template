@@ -1,2 +1,2 @@
 [template]
-exclude = ["cliff.toml"]
+exclude = ["cliff.toml", ".cursor/*"]
