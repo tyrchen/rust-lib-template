@@ -1,6 +1,6 @@
 ---
 description:
-globs: Cargo.toml,*.rs
+globs: **/Cargo.toml,**/*.rs
 alwaysApply: false
 ---
 # 🦀 RUST PROJECT RULE SET SYSTEM
