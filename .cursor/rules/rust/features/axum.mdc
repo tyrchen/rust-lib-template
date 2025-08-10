@@ -1,5 +1,5 @@
 ---
-description:
+description: "Axum 0.8+ web framework patterns with OpenAPI documentation and production-ready HTTP service architecture"
 globs:
 alwaysApply: false
 ---

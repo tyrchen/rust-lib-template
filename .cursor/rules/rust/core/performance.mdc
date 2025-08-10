@@ -1,7 +1,10 @@
 ---
-description:
+description: "Performance optimization strategies focusing on zero-cost abstractions, memory management, and profiling-driven optimization"
 globs:
-alwaysApply: false
+  - "**/*.rs"
+  - "**/main.rs"
+  - "**/lib.rs"
+alwaysApply: true
 ---
 # ⚡ RUST PERFORMANCE OPTIMIZATION
 

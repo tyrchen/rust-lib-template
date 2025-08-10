@@ -1,7 +1,12 @@
 ---
-description:
+description: "High-performance concurrency patterns using Tokio, DashMap, and lock-free data structures for scalable async applications"
 globs:
+  - "**/*.rs"
+  - "**/Cargo.toml"
 alwaysApply: false
+enableIf:
+  - dependsOn: ["tokio", "dashmap"]
+  - fileContains: ["async fn", "tokio::", "DashMap", "Arc<", "Mutex<", "RwLock<", "mpsc::", "broadcast::"]
 ---
 # ⚡ RUST CONCURRENCY BEST PRACTICES
 

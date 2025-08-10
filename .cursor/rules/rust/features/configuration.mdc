@@ -1,7 +1,15 @@
 ---
-description:
+description: "Advanced configuration management with hot-reloading, multi-format support, and validation patterns for production services"
 globs:
+  - "**/*.rs"
+  - "**/Cargo.toml"
+  - "**/*.yaml"
+  - "**/*.toml"
+  - "**/*.json"
 alwaysApply: false
+enableIf:
+  - dependsOn: ["figment", "arc-swap", "notify", "validator"]
+  - fileContains: ["figment::", "arc_swap::", "notify::", "config", "Config", "ArcSwap"]
 ---
 # ⚙️ RUST CONFIGURATION MANAGEMENT
 

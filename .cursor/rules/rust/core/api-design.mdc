@@ -1,7 +1,9 @@
 ---
-description:
+description: "Comprehensive API design guidelines for creating ergonomic, maintainable, and idiomatic Rust libraries and services"
 globs:
-alwaysApply: false
+  - "**/*.rs"
+  - "**/lib.rs"
+alwaysApply: true
 ---
 # 🎨 RUST API DESIGN BEST PRACTICES
 

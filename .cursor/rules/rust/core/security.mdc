@@ -1,7 +1,10 @@
 ---
-description:
+description: "Security-focused programming patterns covering input validation, cryptography, secrets management, and secure coding practices"
 globs:
-alwaysApply: false
+  - "**/*.rs"
+  - "**/main.rs"
+  - "**/lib.rs"
+alwaysApply: true
 ---
 # 🔐 RUST SECURITY BEST PRACTICES
 

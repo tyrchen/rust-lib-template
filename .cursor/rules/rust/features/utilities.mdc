@@ -1,7 +1,12 @@
 ---
-description:
+description: "Essential utility patterns including JWT authentication, CLI tools, enhanced derive macros, and error handling utilities"
 globs:
+  - "**/*.rs"
+  - "**/Cargo.toml"
 alwaysApply: false
+enableIf:
+  - dependsOn: ["jsonwebtoken", "derive_more", "uuid", "rand", "typed-builder"]
+  - fileContains: ["jwt", "JWT", "derive_more", "typed_builder", "TypedBuilder"]
 ---
 # 🛠️ UTILITY LIBRARIES BEST PRACTICES
 

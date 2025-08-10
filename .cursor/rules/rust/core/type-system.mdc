@@ -1,7 +1,11 @@
 ---
-description:
+description: "Advanced type system patterns leveraging Rust's ownership system, newtype patterns, and zero-cost abstractions"
 globs:
-alwaysApply: false
+  - "**/*.rs"
+  - "**/lib.rs"
+alwaysApply: true
+enableIf:
+  - fileContains: ["struct", "enum", "trait", "impl", "type", "PhantomData"]
 ---
 # 🔍 RUST TYPE SYSTEM BEST PRACTICES
 

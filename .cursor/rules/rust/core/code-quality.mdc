@@ -1,7 +1,11 @@
 ---
-description:
+description: "Essential code quality rules for all Rust projects, focusing on maintainable, production-ready code with modern Rust 2024 idioms"
 globs:
-alwaysApply: false
+  - "**/*.rs"
+  - "**/lib.rs"
+  - "**/main.rs"
+  - "**/mod.rs"
+alwaysApply: true
 ---
 # 🦀 RUST CORE CODE QUALITY STANDARDS
 

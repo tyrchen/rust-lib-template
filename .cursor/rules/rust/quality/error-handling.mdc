@@ -1,7 +1,13 @@
 ---
-description:
+description: "Comprehensive error handling patterns using thiserror for libraries and anyhow for applications with structured error design"
 globs:
-alwaysApply: false
+  - "**/*.rs"
+  - "**/lib.rs"
+  - "**/main.rs"
+alwaysApply: true
+enableIf:
+  - dependsOn: ["thiserror", "anyhow"]
+  - fileContains: ["Result<", "Error", "thiserror::", "anyhow::"]
 ---
 # 🚨 RUST ERROR HANDLING STANDARDS
 

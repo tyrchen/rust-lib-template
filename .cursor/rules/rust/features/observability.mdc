@@ -1,7 +1,12 @@
 ---
-description:
+description: "Comprehensive observability patterns with metrics collection, distributed tracing, and health monitoring for production services"
 globs:
+  - "**/*.rs"
+  - "**/Cargo.toml"
 alwaysApply: false
+enableIf:
+  - dependsOn: ["prometheus", "opentelemetry", "tracing", "tracing-subscriber"]
+  - fileContains: ["prometheus::", "opentelemetry::", "tracing::", "#[instrument]", "metrics::", "counter!", "histogram!"]
 ---
 # 📊 RUST OBSERVABILITY PATTERNS
 

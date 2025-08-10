@@ -1,7 +1,13 @@
 ---
-description:
+description: "CLI application patterns using Clap 4.0+ with subcommands, interactive prompts, and professional user experience"
 globs:
+  - "**/*.rs"
+  - "**/Cargo.toml"
+  - "**/main.rs"
 alwaysApply: false
+enableIf:
+  - dependsOn: ["clap"]
+  - fileContains: ["use clap::", "#[derive(Parser)]", "Command::", "Args", "Subcommand"]
 ---
 # 🖥️ RUST CLI APPLICATION STANDARDS
 

@@ -1,7 +1,12 @@
 ---
-description:
+description: "SQLx database patterns with type-safe queries, repository design, and comprehensive testing strategies"
 globs:
+  - "**/*.rs"
+  - "**/Cargo.toml"
 alwaysApply: false
+enableIf:
+  - dependsOn: ["sqlx"]
+  - fileContains: ["use sqlx::", "query_as!", "FromRow", "PgPool", "SqlitePool", "migrate!"]
 ---
 # 🗄️ RUST DATABASE BEST PRACTICES
 

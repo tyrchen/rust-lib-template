@@ -3,6 +3,19 @@ description:
 globs: Cargo.toml,*.rs
 alwaysApply: false
 ---
+---
+description: "🦀 Comprehensive Rust development guidelines with complexity-based rule loading for scalable, maintainable code"
+globs:
+  - "**/*.rs"
+  - "**/Cargo.toml"
+  - "**/Cargo.lock"
+  - "**/build.rs"
+  - "**/lib.rs"
+  - "**/main.rs"
+  - "**/mod.rs"
+alwaysApply: true
+---
+
 # 🦀 RUST PROJECT RULE SET SYSTEM
 
 > **TL;DR:** This system provides comprehensive guidelines for Rust project development with complexity-based rule loading, following industry best practices for scalable, maintainable Rust code.

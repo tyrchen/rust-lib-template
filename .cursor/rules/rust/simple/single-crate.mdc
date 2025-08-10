@@ -1,5 +1,5 @@
 ---
-description:
+description: "Single crate project structure guidelines for simple, focused Rust applications and libraries"
 globs:
 alwaysApply: false
 ---

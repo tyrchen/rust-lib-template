@@ -1,7 +1,13 @@
 ---
-description:
+description: "Comprehensive testing strategies with unit tests, integration tests, and mocking patterns for robust Rust applications"
 globs:
-alwaysApply: false
+  - "**/*.rs"
+  - "**/tests/**/*.rs"
+  - "**/lib.rs"
+  - "**/main.rs"
+alwaysApply: true
+enableIf:
+  - fileContains: ["#[test]", "#[cfg(test)]", "mod tests", "assert!", "tokio::test"]
 ---
 # 🧪 RUST TESTING STANDARDS
 

@@ -1,7 +1,12 @@
 ---
-description:
+description: "HTTP client patterns using reqwest with error handling, retry logic, and resilience patterns for external API integration"
 globs:
+  - "**/*.rs"
+  - "**/Cargo.toml"
 alwaysApply: false
+enableIf:
+  - dependsOn: ["reqwest"]
+  - fileContains: ["reqwest::", "Client::", "Response", "get()", "post()", "http_client"]
 ---
 # 🌐 HTTP CLIENT BEST PRACTICES
 

@@ -1,7 +1,10 @@
 ---
-description:
+description: "Essential design patterns for Rust applications, leveraging ownership system and zero-cost abstractions"
 globs:
-alwaysApply: false
+  - "**/*.rs"
+  - "**/lib.rs"
+  - "**/main.rs"
+alwaysApply: true
 ---
 # 🎭 RUST DESIGN PATTERNS
 

@@ -1,7 +1,15 @@
 ---
-description:
+description: "Advanced tooling patterns with tracing, YAML configuration, and MiniJinja templates for complex data processing"
 globs:
+  - "**/*.rs"
+  - "**/Cargo.toml"
+  - "**/*.yaml"
+  - "**/*.yml"
+  - "**/*.jinja"
 alwaysApply: false
+enableIf:
+  - dependsOn: ["tracing", "serde_yaml", "minijinja", "jsonpath-rust"]
+  - fileContains: ["tracing::", "serde_yaml::", "minijinja::", "jsonpath", "template"]
 ---
 # 🛠️ TOOLS AND CONFIGURATION BEST PRACTICES
 

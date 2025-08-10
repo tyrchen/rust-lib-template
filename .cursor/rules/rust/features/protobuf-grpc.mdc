@@ -1,7 +1,15 @@
 ---
-description:
+description: "Protocol Buffers and gRPC patterns using Prost/Tonic 0.13+ for high-performance inter-service communication"
 globs:
+  - "**/*.rs"
+  - "**/Cargo.toml"
+  - "**/*.proto"
+  - "**/build.rs"
 alwaysApply: false
+enableIf:
+  - dependsOn: ["tonic", "prost", "prost-types"]
+  - fileContains: ["tonic::", "prost::", "proto", ".proto", "tonic_build", "prost_build"]
+  - fileExists: ["**/*.proto"]
 ---
 # 🛜 RUST PROTOBUF & GRPC STANDARDS
 

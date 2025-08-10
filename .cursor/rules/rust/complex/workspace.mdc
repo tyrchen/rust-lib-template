@@ -1,5 +1,5 @@
 ---
-description:
+description: "Multi-crate workspace structure guidelines for organizing complex Rust projects with clear subsystem boundaries"
 globs:
 alwaysApply: false
 ---

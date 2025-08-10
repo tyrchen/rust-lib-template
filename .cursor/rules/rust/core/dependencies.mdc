@@ -1,7 +1,10 @@
 ---
-description:
+description: "Centralized dependency management guidelines for consistent, secure, and maintainable Rust projects"
 globs:
-alwaysApply: false
+  - "**/Cargo.toml"
+  - "**/Cargo.lock"
+  - "**/*.rs"
+alwaysApply: true
 ---
 # 📦 RUST DEPENDENCY MANAGEMENT
 

@@ -15,3 +15,7 @@ categories = ["development-tools"]
 keywords = []
 
 [dependencies]
+serde = { version = "1.0", features = ["derive"] }
+tokio = { version = "1.0", features = ["full"] }
+thiserror = "1.0"
+anyhow = "1.0"
