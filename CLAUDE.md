@@ -1,5 +1,7 @@
 # {{ project-name }}
 
+IMPORTANT: Never enter plan mode automatically!!! Never enter plan mode automatically!!!
+
 ## Core Principles
 
 ### Code Quality
