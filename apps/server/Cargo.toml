@@ -1,0 +1,17 @@
+[package]
+name = "{{ project-name }}-server"
+description = """
+
+"""
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+documentation.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[dependencies]
+{{ project-name }}-core.workspace = true
+anyhow.workspace = true
+tokio.workspace = true
