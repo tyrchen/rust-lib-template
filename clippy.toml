@@ -1,0 +1,30 @@
+disallowed-types = [
+    { path = "std::fs::DirBuilder", replacement = "tokio::fs::DirBuilder" },
+    { path = "std::fs::DirEntry", replacement = "tokio::fs::DirEntry" },
+    { path = "std::fs::File", replacement = "tokio::fs::File" },
+    { path = "std::fs::OpenOptions", replacement = "tokio::fs::OpenOptions" },
+    { path = "std::fs::ReadDir", replacement = "tokio::fs::ReadDir" },
+    { path = "std::process::Command", replacement = "tokio::process::Command" },
+]
+
+disallowed-methods = [
+    { path = "std::fs::canonicalize", replacement = "tokio::fs::canonicalize" },
+    { path = "std::fs::copy", replacement = "tokio::fs::copy" },
+    { path = "std::fs::create_dir", replacement = "tokio::fs::create_dir" },
+    { path = "std::fs::create_dir_all", replacement = "tokio::fs::create_dir_all" },
+    { path = "std::fs::exists", replacement = "tokio::fs::try_exists" },
+    { path = "std::fs::hard_link", replacement = "tokio::fs::hard_link" },
+    { path = "std::fs::metadata", replacement = "tokio::fs::metadata" },
+    { path = "std::fs::read", replacement = "tokio::fs::read" },
+    { path = "std::fs::read_dir", replacement = "tokio::fs::read_dir" },
+    { path = "std::fs::read_link", replacement = "tokio::fs::read_link" },
+    { path = "std::fs::read_to_string", replacement = "tokio::fs::read_to_string" },
+    { path = "std::fs::remove_dir", replacement = "tokio::fs::remove_dir" },
+    { path = "std::fs::remove_dir_all", replacement = "tokio::fs::remove_dir_all" },
+    { path = "std::fs::remove_file", replacement = "tokio::fs::remove_file" },
+    { path = "std::fs::rename", replacement = "tokio::fs::rename" },
+    { path = "std::fs::set_permissions", replacement = "tokio::fs::set_permissions" },
+    { path = "std::fs::soft_link", replacement = "tokio::fs::soft_link" },
+    { path = "std::fs::symlink_metadata", replacement = "tokio::fs::symlink_metadata" },
+    { path = "std::fs::write", replacement = "tokio::fs::write" },
+]

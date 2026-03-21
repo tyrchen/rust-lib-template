@@ -37,6 +37,7 @@ For docs, explore ./docs directory and put it to the right place, and update ind
 - Run `cargo audit` regularly to check for security vulnerabilities in dependencies.
 - Use `cargo-deny` to enforce license policies and ban specific crates.
 - Enable all rustc lints in Cargo.toml: `#![warn(rust_2024_compatibility, missing_docs, missing_debug_implementations)]`.
+- DO NOT use `cargo clean` at any time. If you indeed need it, ask user for permission
 
 ## Error Handling
 
@@ -69,6 +70,7 @@ For docs, explore ./docs directory and put it to the right place, and update ind
 - Use enums for state machines. Prefer type-state pattern for compile-time state enforcement when applicable.
 - Use Rust's type system to make illegal states unrepresentable. Encode invariants in types, not runtime checks.
 - Do not use `Option<T>` when `T` has a default value (e.g. Vec/HashMap/HashSet). Use `Option<T>` only when `T` is truly optional.
+- always prefer to use From / TryFrom / FromStr traits for type conversion. For parsing a string with certain grammar, prefer to use latest version of winnow.
 
 ## Safety & Security
 
@@ -112,6 +114,8 @@ For docs, explore ./docs directory and put it to the right place, and update ind
 
 - Profile before optimizing. Use `cargo flamegraph`, `perf`, or `samply` for profiling.
 - Avoid unnecessary allocations. Use `&str` instead of `String`, prefer borrowing over cloning.
+- Bring in bytes when necessary and prefer Bytes related data structure over Vec on handling payload.
+- Avoid unnecessary cloning, use Arc or related data structure when necessary.
 - Use `Vec::with_capacity()` when final size is known. Pre-allocate collections to avoid reallocation.
 - Use iterators instead of explicit loops. Iterators are often optimized better and compose well.
 - Use `SmallVec` for small vectors that usually fit on stack. Use `smallbox` for small heap allocations.
@@ -138,6 +142,7 @@ For docs, explore ./docs directory and put it to the right place, and update ind
 ## Code Style
 
 - always import `use` dependencies in the top of the file in the following order: std, deps, local modules.
+- Use specific imports (`use xxx::yyy::ZZZ`) and reference types/functions directly by name (`ZZZ`) in code. Never use fully qualified paths in function/structure/trait implementations. Exception: macros may use fully qualified paths when necessary.
 - Follow Rust naming conventions: `snake_case` for functions/variables, `PascalCase` for types, `SCREAMING_SNAKE_CASE` for constants.
 - Keep functions small and focused. Embrace KISS principle. Extract complex logic into well-named functions. Unless absolutely necessary, function should not be more than 150 lines of code.
 - Prefer explicit types over `impl Trait` in public APIs for clarity. Use `impl Trait` for internal functions.
