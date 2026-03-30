@@ -24,41 +24,41 @@ repos:
         name: cargo fmt
         description: Format files with rustfmt.
         entry: bash -c 'cargo fmt -- --check'
-        language: rust
+        language: system
         files: \.rs$
-        args: []
+        pass_filenames: false
       - id: cargo-deny
         name: cargo deny check
         description: Check cargo dependencies
         entry: bash -c 'cargo deny check -d'
-        language: rust
+        language: system
         files: \.rs$
-        args: []
+        pass_filenames: false
       - id: typos
         name: typos
         description: check typo
         entry: bash -c 'typos'
-        language: rust
+        language: system
         files: \.*$
         pass_filenames: false
       - id: cargo-check
         name: cargo check
         description: Check the package for errors.
         entry: bash -c 'cargo check --all'
-        language: rust
+        language: system
         files: \.rs$
         pass_filenames: false
       - id: cargo-clippy
         name: cargo clippy
         description: Lint rust sources
         entry: bash -c 'cargo clippy --all-targets --all-features --tests --benches -- -D warnings'
-        language: rust
+        language: system
         files: \.rs$
         pass_filenames: false
       - id: cargo-test
         name: cargo test
         description: unit test for the project
         entry: bash -c 'cargo nextest run --all-features -- --include-ignored'
-        language: rust
+        language: system
         files: \.rs$
         pass_filenames: false
