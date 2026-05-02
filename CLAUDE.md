@@ -74,13 +74,67 @@ For docs, explore ./docs directory and put it to the right place, and update ind
 
 ## Safety & Security
 
-- Never use `unsafe` blocks, even in test code. If absolutely necessary, document safety invariants thoroughly.
-- Always validate and sanitize external input (user input, network data, file content), use `validator` crate for validation when necessary.
-- Use `rustls` with `aws-lc-rs` crypto backend for TLS. Never use `native-tls` or OpenSSL bindings.
-- Use constant-time comparison for cryptographic values. Use `subtle` crate's `ConstantTimeEq`.
-- Never log, print, or expose sensitive data (passwords, tokens, keys). Implement `Debug` carefully for sensitive types.
-- Use `secrecy` crate for handling secrets in memory (prevents accidental logging/exposure).
-- For test environment variables, use `dotenvy` crate. Never hard-code credentials.
+Two complementary disciplines. **Safety** is about Rust's memory and concurrency guarantees — keep the soundness contract intact so the compiler can prove correctness. **Security** is about hostile input from the outside world — validate at the boundary, defense in depth, assume any single layer will fail. Treat every value crossing a trust boundary (HTTP, IPC, files, env vars, CLI args, deserialization, message queues) as hostile until proven otherwise.
+
+### Rust Safety
+
+- **No `unsafe`**: `#![forbid(unsafe_code)]` at the crate root. Never use `unsafe` blocks, including in tests. If a dependency genuinely requires it, isolate behind a thin safe wrapper, document every safety invariant, and add a fuzz harness — `unsafe` is a contract you sign with the compiler, and breaking it is undefined behavior.
+- **No panics on external input**: `unwrap()`, `expect()`, `[]` indexing, `unreachable!()`, `todo!()`, `panic!()` reachable from user data is a DoS vector and a soundness liability. Use `?`, `.get()`, `try_into()`, explicit `match`. Lint boundary modules with `cargo clippy -W clippy::unwrap_used -W clippy::indexing_slicing -W clippy::panic -W clippy::expect_used`.
+- **No undefined behavior**: No transmute between unrelated types, no aliasing `&mut`, no uninitialized reads, no out-of-bounds. If `cargo +nightly miri test` would flag it, fix it.
+- **Checked arithmetic on external values**: Use `checked_*`/`saturating_*`/`wrapping_*` explicitly when arithmetic touches user input. Default `+` panics in debug and silently wraps in release — both are wrong for security-sensitive code.
+- **No data races**: Rust's `Send`/`Sync` rule out data races at compile time — don't fight the type system with `Mutex<RefCell<_>>` or interior mutability tricks. Prefer message passing (channels) over shared state, as `Async & Concurrency` covers.
+- **FFI boundaries**: When calling C, the FFI surface is `unsafe` by definition — wrap it in a safe Rust API that upholds invariants (null-check pointers, validate lengths, take ownership clearly). Never expose raw `*mut T` to safe callers.
+- **Soundness > convenience**: A safe API that's slightly awkward beats an `unsafe` shortcut. If you find yourself reaching for `unsafe` for performance, profile first — `unsafe` is rarely the bottleneck.
+
+### Input Validation
+
+- **Validate at the boundary**: Run validation immediately at deserialization/parse time, before any business logic touches the value. Once a value enters the domain, it must already be valid — no "we'll check this later".
+- **Reject, don't sanitize**: Prefer rejecting invalid input over cleaning it. Sanitization has bypasses (encoding tricks, double-encoding, Unicode normalization, homoglyphs); rejection has none. Strip-and-continue is a code smell.
+- **Length limits on every string**: Every `String`/`&str` derived from external input must have an explicit maximum length, enforced in **bytes** (not chars) to defeat multi-byte exhaustion. Real attack seen in the wild: `User-Agent` headers containing entire `<html>` documents to balloon logs, DB rows, and downstream parsers — even fields you "don't care about" need caps. Default cap unknown fields to something small (e.g. 256 bytes) and raise deliberately.
+- **Charset allowlists, never blocklists**: Define what's permitted, never what's forbidden. Blocklists are always incomplete (Unicode confusables, control chars, RTL overrides, zero-width spaces, NUL bytes). Use regex allowlists like `^[a-zA-Z0-9_-]{1,64}$` for identifiers, slugs, and free-form short fields.
+- **Bound every collection**: `Vec<T>`, `HashMap<K, V>`, `HashSet<T>` from external input must have explicit element-count caps in addition to per-element validation. An unbounded `Vec<u8>` of length-bounded strings is still a memory exhaustion vector.
+- **Numeric ranges**: Bound every integer from external input. `u32` is not a range; an explicit `1..=1000` is. Use `validator`'s `range` or a newtype with a fallible constructor.
+- **Newtype every domain primitive**: Wrap validated values in newtypes with private fields and a fallible constructor (`UserId(u64)`, `Email(String)`, `Slug(String)`, `UserAgent(String)`). Validation runs once in `new`/`try_from`; every downstream use is provably safe by construction. This is the type system enforcing security invariants.
+- **Use the `validator` crate**: For struct-level validation, derive `Validate` and annotate fields with `#[validate(length(max = 256), regex = "...", email, url, range(min = 1, max = 1000))]`. Call `.validate()` immediately after deserialization — `serde` checks shape, not semantics.
+- **Make illegal states unrepresentable**: `NonZeroU32`, `NonEmpty<T>`, state-machine enums, `#[serde(deny_unknown_fields)]`. Don't runtime-check what the type system can prove at compile time.
+
+### Injection Prevention
+
+- **SQL**: Always parameterize. `sqlx::query!`, `diesel`, `sea-orm` bound parameters. `format!("... WHERE id = {}", id)` is a CVE waiting for a PR.
+- **Shell**: Use `Command::new("foo").arg(user_input)` (argv form). Never `sh -c` with concatenated user input. Prefer a Rust crate over shelling out at all.
+- **Path traversal**: For user-supplied filenames, reject `..`, absolute paths, NUL bytes, and OS-specific separators up front. Then canonicalize and verify `canonical.starts_with(allowed_root)`. Symlinks defeat naïve checks — re-canonicalize after open when possible.
+- **URL / SSRF**: Parse with `url::Url`, allowlist schemes (`https` only for outbound), resolve the hostname yourself and reject private/loopback/link-local ranges (`10.0.0.0/8`, `127.0.0.0/8`, `169.254.0.0/16`, `::1`, `fc00::/7`). Pin the resolved IP for the connection — don't re-resolve, or DNS rebinding wins.
+- **HTML / templating**: Render user content through auto-escaping templates (`askama`, `maud`, `tera` with autoescape on). Never `format!` user data into HTML.
+- **Regex (ReDoS)**: Use the `regex` crate (linear-time guarantee). Never `fancy-regex`/`pcre`/`onig` on untrusted input. If accepting untrusted regex *patterns*, set `RegexBuilder::size_limit` and `dfa_size_limit`, and reject patterns over a length cap before compile.
+- **Log injection**: Use `tracing` structured fields, never string-concatenate user input into log lines. Strip/escape newlines and control chars in any user value that does land in a message.
+
+### Resource Limits & DoS
+
+- **Body size**: HTTP servers cap request body at the framework layer (`axum::extract::DefaultBodyLimit`, `tower_http::limit::RequestBodyLimitLayer`). Set to the smallest size that supports legitimate traffic, not "comfortably large".
+- **Timeouts**: Every network and disk IO operation needs a timeout (`tokio::time::timeout`). Per-request, per-connection, per-upstream-call. No exceptions.
+- **Concurrency caps**: Bound concurrent in-flight work with `tokio::sync::Semaphore` or `tower::limit`. An unbounded `tokio::spawn` per request is a fork bomb.
+- **Recursion limits**: Set explicit depth limits for nested parsing (JSON, XML, protobuf). Review `serde_json`'s default recursion limit and lower it for untrusted input.
+- **Decompression bombs**: For gzip/zstd/brotli input, use streaming decoders wrapped with a byte-counting `Read` that errors past a hard limit. Never `read_to_end` on a decompressor fed from the network.
+- **Integer overflow**: Use `checked_*`/`saturating_*` explicitly when arithmetic touches external values. Debug-panic + release-wrap is the worst combination for security-sensitive code.
+- **Rate limiting**: Per-IP and per-account limits on auth, signup, password reset, search, and any unauthenticated endpoint (`tower_governor`, `governor`).
+
+### Cryptography & Secrets
+
+- **TLS**: `rustls` with the `aws-lc-rs` crypto backend. Never `native-tls`, OpenSSL bindings, or `rustls` + `ring` for new code.
+- **Constant-time comparison**: `subtle::ConstantTimeEq` for tokens, MACs, signatures, password hashes — anything where timing leaks information.
+- **Password hashing**: `argon2` (id variant) with parameters tuned for ≥250ms on target hardware. Never MD5/SHA-1/SHA-256/bcrypt for new code.
+- **Randomness**: `rand::rngs::OsRng` or `getrandom` for tokens/keys/nonces/IDs. Never `thread_rng()` for security-sensitive randomness — it is not contractually CSPRNG-strength across versions.
+- **Secret types**: Wrap in `secrecy::SecretString`/`SecretBox`. `Debug` redacts; access requires explicit `expose_secret()`. For custom types containing credentials, implement `Debug` manually and add a unit test asserting redacted output.
+- **No secrets in logs/errors/panics**: `error!("failed: {req:?}")` will happily leak the `Authorization` header. Build a redacting `Debug` for request types, or `#[serde(skip)]`/skip the field in tracing.
+- **Secret loading**: From env (`dotenvy` for tests only) or a secret manager. Never hard-code, never commit `.env*`, never bake into binaries. Run a secret scanner in pre-commit / CI.
+- **Key rotation**: Design APIs to support multiple active keys simultaneously so rotation does not require a redeploy.
+
+### AuthN / AuthZ
+
+- **AuthN every request**: No endpoints trusting network position. Zero trust at the application layer.
+- **AuthZ every action**: Permission check at the operation level, not at the route. IDOR is the #1 web-app CVE class — `GET /docs/{id}` must verify *this caller can read doc id*.
+- **Session tokens**: ≥256 bits of CSPRNG entropy, stored hashed server-side, transmitted as `HttpOnly; Secure; SameSite=Lax` cookies for browser flows.
+- **Don't roll your own auth**: Use `axum-login`, `oauth2`, `openidconnect`. Custom auth is where CVEs live.
 
 ## Serialization & Data
 
