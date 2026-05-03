@@ -23,7 +23,7 @@ repos:
       - id: cargo-fmt
         name: cargo fmt
         description: Format files with rustfmt.
-        entry: bash -c 'cargo fmt -- --check'
+        entry: bash -c 'cargo +nightly fmt -- --check'
         language: system
         files: \.rs$
         pass_filenames: false
