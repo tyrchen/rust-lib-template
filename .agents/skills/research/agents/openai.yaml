@@ -1,0 +1,4 @@
+interface:
+  display_name: "Research"
+  short_description: "Vendor references and write research memos"
+  default_prompt: "Use the research skill to vendor reference repositories or survey current sources, then produce a concise memo under docs/research."

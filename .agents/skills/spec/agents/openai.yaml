@@ -1,0 +1,4 @@
+interface:
+  display_name: "Spec"
+  short_description: "Turn requirements into phased Rust specs"
+  default_prompt: "Use the spec skill to write or reorganize a dependency-ordered spec set with roadmap, implementation plan, and key decisions."
