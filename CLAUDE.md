@@ -4,6 +4,12 @@ IMPORTANT: Never enter plan mode automatically!!! Never enter plan mode automati
 
 ## Core Principles
 
+### Completion Discipline
+
+- **Do Not Stop Early**: If the user's requested outcome is not fully complete, do not stop at a draft, partial pass, or "good enough" result. Continue reviewing and improving until the request is genuinely handled or a concrete blocker requires user input.
+- **Polish Bar**: Before declaring work complete, ask whether the result is fully polished, concrete, correct, complete, and elegant. If there is doubt, review the work again and update it.
+- **Honest Status**: Do not claim a task is finished when it is only a first pass, scaffold, or partial draft. State the remaining gaps and keep working unless the user explicitly asks to pause.
+
 ### Code Quality
 
 - **SOLID and DRY Principles**: Maintain clean, maintainable code following SOLID and DRY principles
