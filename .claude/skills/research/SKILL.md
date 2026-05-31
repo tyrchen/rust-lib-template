@@ -28,6 +28,63 @@ For each topic, exactly one memo at `./docs/research/<kind>-<slug>.md` plus an u
 
 Always pick the narrowest kind that fits; specificity beats breadth.
 
+### Diagram expectation
+
+Use fenced ASCII-style diagrams (` ```text `) whenever they materially improve understanding of high-level architecture, data flow, processing flow, component/subsystem relationships, lifecycle/state transitions, or build/dependency order. Diagrams are load-bearing documentation: keep labels precise, show directionality, and place the diagram before the prose that explains it. Prefer terminal-safe text diagrams over Mermaid so specs and research stay readable in terminals, code review, and plain Markdown renderers. Unicode box-drawing characters (`┌─┐│└┘`, `▼`, `▲`) are encouraged when they make the structure clearer. Do not add decorative diagrams that merely repeat a short paragraph.
+
+For non-trivial studies, use nested boxes or grouped lanes like an architecture chart, not a bare arrow chain. Show module ownership, runtime boundaries, spawned tasks/threads, queues/channels, external systems, storage, and error or shutdown paths where they explain the design. A short arrow chain is acceptable only for a simple linear call path with no meaningful branch or boundary.
+
+For ordered protocols, request lifecycles, async handoffs, retries, shutdown, or multi-party handshakes, use a sequence-style ASCII diagram with vertical lifelines and numbered steps. Preserve time from top to bottom, name each participant as a column, and label durable state changes, validation, persistence, external calls, and failure branches.
+
+Example shape:
+
+```text
+                           ┌──────────────────────────────────┐
+                           │  Public API / macro entry point  │
+                           │                                  │
+                           │  ┌────────────────────────────┐  │
+                           │  │  Frontend parser / builder │  │
+                           │  │  - validates shape         │  │
+                           │  │  - interns metadata        │  │
+                           │  └─────────────┬──────────────┘  │
+                           └────────────────┼─────────────────┘
+                                            │ generated callsite
+             ┌──────────────────────────────▼──────────────┐
+             │  Runtime dispatcher                         │
+             │  - lock-free fast path                      │
+             │  - fallback on disabled subscriber          │
+             └──────────────┬──────────────────────────────┘
+                            │
+       ┌────────────────────▼────────────┐      ┌──────────────────────┐
+       │  Subscriber / sink stack        │─────▶│  Output / transport  │
+       │  - filters                      │      │  - batching          │
+       │  - formatting                   │      │  - backpressure      │
+       └─────────────────────────────────┘      └──────────────────────┘
+```
+
+Sequence-flow shape:
+
+```text
+Client                         Runtime                       External Service
+ │                                │                                │
+ │ 1. Create request context      │                                │
+ │    attach trace id             │                                │
+ │                                │                                │
+ │ 2. Enqueue work ──────────────▶│                                │
+ │                                │ 3. Reserve capacity            │
+ │                                │    record pending state        │
+ │                                │                                │
+ │                                │ 4. Send request ──────────────▶│
+ │                                │                                │
+ │                                │ 5. Response / error ◀─────────│
+ │                                │                                │
+ │                                │ 6. Commit, retry, or cancel    │
+ │                                │    according to policy         │
+ │                                │                                │
+ │ 7. Deliver outcome ◀──────────│                                │
+ │                                │                                │
+```
+
 ## Workflow
 
 1. **Confirm scope** — Restate in one sentence what question the memo will answer. If it is broad ("how does tracing work"), force it narrower until it names a specific subsystem, decision, or invariant. A memo with no question becomes a wiki page nobody reads.
@@ -102,7 +159,7 @@ What downstream design / spec / code needs this knowledge. If nothing needs it, 
 
 ## Architecture map
 
-Module graph (text or mermaid). Name the load-bearing types and the trait boundaries.
+Boxed ASCII-style module graph, architecture chart, or sequence-flow diagram where useful. Name the load-bearing types, runtime boundaries, queues/channels, external systems, state transitions, and trait boundaries.
 
 ## Hot path walkthrough
 

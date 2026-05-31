@@ -21,6 +21,10 @@ Land one phase from `./specs/91-impl-plan.md` to a publishable bar — no TODOs,
 - Not for greenfield design work. If `./specs/` is empty or the relevant phase is not specified, hand off to the **spec** skill first.
 - Not for prototyping. The quality bar here is "publishable"; throwaway code lives somewhere else.
 
+## Diagram expectation
+
+When an implementation phase changes architecture, data flow, processing flow, lifecycle/state transitions, or build/dependency order, update the corresponding spec or research diagrams in the same phase. Use fenced ASCII-style diagrams (` ```text `) with nested boxes or grouped lanes for non-trivial systems, matching the spec/research skill standard. Prefer terminal-safe box-drawing characters (`┌─┐│└┘`, `▼`, `▲`) when they make ownership and runtime boundaries clearer. For request/protocol flows, use vertical lifelines with numbered steps so the ordering is reviewable. Do not leave diagrams as stale prose-adjacent decorations; they must show the real components, channels, storage, external systems, state transitions, and failure/shutdown paths that changed.
+
 ## Workflow
 
 ### 1. Bind the scope
@@ -59,39 +63,48 @@ Do not paraphrase CLAUDE.md here — it is already loaded into your context. Ope
 
 If a spec for this phase silently relaxes a CLAUDE.md rule, the spec is wrong: record it in the deferred-findings backlog and raise it before writing code. If you genuinely need to deviate at a specific call site (e.g. a single `#[allow(...)]`), the commit message must name the `file:line` and the reason — reviewers will check.
 
-### 4. Run the standard quality gates
+### 4. Select and run relevant quality gates
 
-After each meaningful task and again before claiming the phase complete:
+After each meaningful task and again before claiming the phase complete, inspect `git diff --name-only` and the phase exit criteria. Run the checks that exercise the changed surface; do not run Rust build/test/clippy for docs-only, spec-only, or skill-only changes that cannot affect Rust behaviour.
 
-```bash
-cargo build --workspace --all-targets
-cargo test  --workspace --all-targets
-cargo +nightly fmt -- --check
-cargo clippy --workspace --all-targets -- -D warnings
-RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
-```
+Use this matrix:
 
-The `cargo doc` line catches broken intra-doc links and missing-docs lints — cheap to enforce, easy to let rot if you skip it.
+- Rust source, tests, examples, `build.rs`, feature flags, `Cargo.toml`, `Cargo.lock`, or generated Rust artifacts changed:
 
-For boundary modules and any code touching external input, also:
+  ```bash
+  cargo build --workspace --all-targets
+  cargo test  --workspace --all-targets
+  cargo +nightly fmt -- --check
+  cargo clippy --workspace --all-targets -- -D warnings
+  ```
 
-```bash
-cargo clippy --workspace --all-targets -- \
-  -D warnings -W clippy::pedantic \
-  -W clippy::unwrap_used -W clippy::expect_used \
-  -W clippy::indexing_slicing -W clippy::panic
-```
+- Public Rust API docs, doctests, or intra-doc links changed:
 
-If the phase introduces dependencies, run:
+  ```bash
+  RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
+  ```
 
-```bash
-cargo deny check
-cargo audit
-```
+- Boundary modules or code touching external input changed:
 
-If the project has a `Makefile` with these gates wired (`make check` / `make ci`), prefer that — keeps the gates discoverable.
+  ```bash
+  cargo clippy --workspace --all-targets -- \
+    -D warnings -W clippy::pedantic \
+    -W clippy::unwrap_used -W clippy::expect_used \
+    -W clippy::indexing_slicing -W clippy::panic
+  ```
 
-**Never** bypass a gate (`--no-verify`, allow-by-default lints introduced for one site, ignored tests). If a gate fails, fix the underlying cause.
+- Dependencies, lockfiles, license policy, supply-chain config, or release packaging changed:
+
+  ```bash
+  cargo deny check
+  cargo audit
+  ```
+
+- Documentation, specs, research memos, AGENTS/CLAUDE instructions, or skills changed without touching Rust-affecting inputs: proofread/render the changed Markdown where useful, verify touched links and indexes, run `make check-agent-sync` for AGENTS/CLAUDE/skill edits, and run skill frontmatter validation for changed skill folders.
+
+If the project has a `Makefile` with relevant gates wired (`make check` / `make ci` / narrower targets), prefer that — keeps the gates discoverable.
+
+**Never** bypass a relevant gate (`--no-verify`, allow-by-default lints introduced for one site, ignored tests). If a gate fails, fix the underlying cause. If a heavyweight gate is not relevant to the diff, say why instead of running it mechanically.
 
 ### 5. Verify exit criteria
 
@@ -126,7 +139,7 @@ This is the load-bearing step. The phase is **not done** until reviewed against 
   - **Valid + out-of-phase** — append to the deferred-findings backlog spec (see below) with severity, file:line, and fix shape. Do not silently inflate scope.
   - **Invalid** — note why in the response so the user can sanity-check the call.
 
-- Fix the in-phase findings. Re-run quality gates. If a fix is non-trivial, commit separately ("phase N review: fix <P-id>") so history shows the review pass.
+- Fix the in-phase findings. Re-run the relevant quality gates for the changed surface. If a fix is non-trivial, commit separately ("phase N review: fix <P-id>") so history shows the review pass.
 
 - If a finding reveals a **spec defect** (the spec is wrong, not the code), record it in the deferred-findings backlog and surface it to the user before patching either side. Spec drift here is exactly what the spec set exists to prevent.
 
@@ -162,7 +175,7 @@ Final report to the user, in this shape:
 - **Implicit `clone()` everywhere.** Borrow first; `Cow` where ambiguous; `Arc` for shared ownership; clone last.
 - **`Mutex<HashMap>` instead of `DashMap`** (the project's CLAUDE.md is explicit on this — follow it).
 - **Adding features the spec did not request.** If it's not in the spec for this phase, it is out of scope. Either update the spec first or land later.
-- **Skipping `cargo +nightly fmt` and `cargo clippy -D warnings`.** Both are required gates per the project policy.
+- **Skipping scoped verification.** Rust code changes need Rust gates such as `cargo +nightly fmt` and `cargo clippy -D warnings`; docs-only changes need docs/sync validation instead. Do not substitute one for the other.
 - **`git reset --hard` to recover from confusion.** Never. Investigate; ask the user; preserve work. The git reflog is your friend.
 
 ## Cross-references

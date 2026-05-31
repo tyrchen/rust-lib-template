@@ -181,7 +181,7 @@ A component design (`11-…`, `12-…`, …) is not done until each AGENTS.md se
 
 10. **Write the roadmap and impl-plan together** (`90`, `91`):
     - Roadmap has milestones, exit criteria, and a calendar estimate. Calibrate honestly: if the spec's earlier estimate was off by 2×, say so and adjust.
-    - Impl-plan has Phase 0 (risk retirement), Phase 1 (spine), … Phase N (hardening). Each phase has a numbered task table with spec citations and effort estimates. Each phase has explicit *exit criteria* — a test or invariant that must hold before the next phase starts.
+    - Impl-plan has Phase 0 (risk retirement), Phase 1 (spine), … Phase N (hardening). Each phase has a numbered task table with spec citations and effort estimates. Each phase has explicit *exit criteria* — a test or invariant that must hold before the next phase starts — and a verification note naming only the checks that match the phase's changed surfaces.
 
 11. **Write `99-key-decisions.md`** as the spec set stabilises. Each entry: D-id, decision, alternatives considered, the *why*, and a reverse pointer to the spec sections that depend on it. When a future reviewer asks "why this?" — point them here, not to a chat scrollback.
 
@@ -270,7 +270,7 @@ The non-trivial cases — error paths, edge cases, concurrent / async behaviour,
 
 ## 0. Principles
 
-- **Always shippable.** Every milestone leaves the workspace green on the standard quality gates.
+- **Always shippable.** Every milestone leaves the touched surfaces green on the relevant quality gates.
 - **Type-safety / contract-safety first.** Each milestone may defer features but never relaxes guarantees.
 - **Honest calibration.** Estimates are realistic; pad explicitly for review/on-call/meeting overhead.
 
@@ -342,6 +342,8 @@ The spine in strict dependency order. Each row blocks everything underneath.
 | 1.1 | …    | …    | …      |
 
 **Exit criteria**: <test> passes; <bench> is within budget; <invariant> verified.
+
+**Verification**: <commands or manual checks scoped to this phase's changed surfaces; use Rust build/test/fmt/clippy only for Rust-affecting changes>.
 
 ## 5+ Phase 2 … Phase N
 

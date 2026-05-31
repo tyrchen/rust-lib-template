@@ -38,10 +38,12 @@ For docs, explore ./docs directory and put it to the right place, and update ind
 ## Toolchain & Build
 
 - Always use Rust 2024 edition with latest stable version. Pin version in `rust-toolchain.toml`.
-- Always run `cargo build`, `cargo test`, `cargo +nightly fmt`, and `cargo clippy -- -D warnings` before finishing the task.
-- Use `cargo clippy -- -D warnings -W clippy::pedantic` for stricter linting. Allow specific lints with justification.
-- Run `cargo audit` regularly to check for security vulnerabilities in dependencies.
-- Use `cargo-deny` to enforce license policies and ban specific crates.
+- Verification must be scoped to the change, not run mechanically. Before finishing, inspect the diff and run the smallest meaningful checks that can catch regressions in the touched surface. Explain any skipped heavyweight gate.
+- Run the full Rust gate set (`cargo build`, `cargo test`, `cargo +nightly fmt`, and `cargo clippy -- -D warnings`) when Rust source, public Rust APIs, tests, examples, build scripts, feature flags, workspace manifests, or generated Rust artifacts change.
+- Use `cargo clippy -- -D warnings -W clippy::pedantic` for stricter linting on Rust code changes where it adds signal. Allow specific lints with justification.
+- Run `cargo audit` and `cargo deny check` when dependencies, lockfiles, license policy, supply-chain configuration, or release packaging change. Otherwise run them periodically, not for unrelated documentation edits.
+- For documentation/spec/skill-only changes that do not alter Rust code, APIs, Cargo manifests, examples/doctests, generated artifacts, or release packaging, do not run Rust build/test/clippy. Validate the changed artifacts instead: proofread rendered Markdown as needed, check touched links/indexes, run `make check-agent-sync` for AGENTS/CLAUDE/skill edits, and run skill validation when skill folders change.
+- If unsure whether code behavior is affected, choose the narrowest Rust command that answers the question first (for example `cargo test -p <crate> <test>` or `cargo check -p <crate>`) and broaden only when the result warrants it.
 - Enable all rustc lints in Cargo.toml: `#![warn(rust_2024_compatibility, missing_docs, missing_debug_implementations)]`.
 - DO NOT use `cargo clean` at any time. If you indeed need it, ask user for permission
 

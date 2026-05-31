@@ -20,6 +20,74 @@ Turn requirements into a load-bearing spec set: numbered, cross-linked, dependen
 
 A directory of numbered Markdown files under `./specs/`. The numbering is the **build order** — reading top-to-bottom matches the milestone progression in the roadmap. Update `./specs/index.md` so a fresh reader can navigate.
 
+### Diagram expectation
+
+Use fenced ASCII-style diagrams (` ```text `) whenever they materially improve understanding of high-level architecture, data flow, processing flow, component/subsystem relationships, lifecycle/state transitions, or build/dependency order. Diagrams are part of the spec contract: keep labels precise, show directionality, and put the diagram near the decision it clarifies. Prefer terminal-safe text diagrams over Mermaid so the spec remains readable in terminals, code review, and plain Markdown renderers. Unicode box-drawing characters (`┌─┐│└┘`, `▼`, `▲`) are encouraged when they make the structure clearer. Do not add decorative diagrams that merely restate simple prose.
+
+For non-trivial systems, the diagram must be structurally rich enough to review: use nested boxes, lanes, or grouped boundaries rather than a bare `A -> B -> C` chain. Show component ownership, trust/runtime boundaries, queues/channels, storage, external services, error paths, and fan-in/fan-out where they matter. A simple arrow chain is acceptable only for a short linear ordering with no meaningful boundary or alternative path.
+
+For ordered protocols, login flows, request lifecycles, retries, shutdown, or multi-party handshakes, use a sequence-style ASCII diagram with vertical lifelines and numbered steps. Include the actor names as columns, preserve time from top to bottom, and label durable state changes, redirects, validation, token minting, persistence, and failure branches that affect correctness.
+
+Example shape:
+
+```text
+                         ┌────────────────────────────────────┐
+                         │  Public crate API / CLI            │
+                         │                                    │
+                         │  ┌──────────────────────────────┐  │
+                         │  │  Validation boundary         │  │
+                         │  │  - length / range caps       │  │
+                         │  │  - typed domain newtypes     │  │
+                         │  │  - serde deny_unknown_fields │  │
+                         │  └──────────────┬───────────────┘  │
+                         │                 │                  │
+                         │  ┌──────────────▼───────────────┐  │
+                         │  │  Domain command / envelope   │  │
+                         │  │  - invariants encoded        │  │
+                         │  │  - thiserror failures        │  │
+                         │  └──────────────┬───────────────┘  │
+                         └─────────────────┼──────────────────┘
+                                           │ bounded mpsc
+              ┌────────────────────────────▼───────────┐   ┌────────────────────┐
+              │  Actor / state owner                   │   │  Observability     │
+              │  - owns mutable state                  │──▶│  - tracing spans   │
+              │  - restart / shutdown policy           │   │  - redacted fields │
+              └──────────────┬─────────────────────────┘   └────────────────────┘
+                             │
+              ┌──────────────▼──────────────┐
+              │  Storage / external system  │
+              │  - timeout / retry budget   │
+              │  - classified data boundary │
+              └─────────────────────────────┘
+```
+
+Sequence-flow shape:
+
+```text
+CLI / Client                  Service Actor                 External Provider
+ │                                │                                │
+ │ 1. Build validated request     │                                │
+ │    and correlation id          │                                │
+ │                                │                                │
+ │ 2. Submit command ────────────▶│                                │
+ │                                │ 3. Persist pending state       │
+ │                                │    with TTL / idempotency key  │
+ │                                │                                │
+ │                                │ 4. Call provider ─────────────▶│
+ │                                │    timeout / retry budget      │
+ │                                │                                │
+ │                                │ 5. Provider response ◀──────── │
+ │                                │                                │
+ │                                │ 6. Validate + classify result  │
+ │                                │    update durable state        │
+ │                                │                                │
+ │ 7. Return typed outcome ◀──────│                                │
+ │    or domain error             │                                │
+ │                                │                                │
+ │ 8. Emit structured span        │                                │
+ │    with redacted fields        │                                │
+```
+
 ### Right-size the spec set to the problem
 
 **The number of files is a function of system complexity, not a template to fill.** Do not generate every slot below just because the layout shows it. A small library might ship as `00-prd.md` + `10-design.md` + `90-roadmap.md` and nothing else; a large multi-crate platform might need every slot plus a few more. Pick the smallest set that captures the load-bearing decisions for *this* system.
@@ -94,6 +162,7 @@ A component design (`11-…`, `12-…`, …) is not done until each CLAUDE.md se
    - What is the smallest end-to-end slice a user can run? That is M0.
    - What does each subsequent milestone *unlock*? Name it from the user's POV.
    - What blocks what? Draw the build-order graph.
+   - Where architecture, data flow, processing flow, or subsystem relationships are load-bearing, draw a boxed ASCII diagram before writing the prose.
 
    Two principles that separate good phasing from plausible phasing:
 
@@ -112,7 +181,7 @@ A component design (`11-…`, `12-…`, …) is not done until each CLAUDE.md se
 
 10. **Write the roadmap and impl-plan together** (`90`, `91`):
     - Roadmap has milestones, exit criteria, and a calendar estimate. Calibrate honestly: if the spec's earlier estimate was off by 2×, say so and adjust.
-    - Impl-plan has Phase 0 (risk retirement), Phase 1 (spine), … Phase N (hardening). Each phase has a numbered task table with spec citations and effort estimates. Each phase has explicit *exit criteria* — a test or invariant that must hold before the next phase starts.
+    - Impl-plan has Phase 0 (risk retirement), Phase 1 (spine), … Phase N (hardening). Each phase has a numbered task table with spec citations and effort estimates. Each phase has explicit *exit criteria* — a test or invariant that must hold before the next phase starts — and a verification note naming only the checks that match the phase's changed surfaces.
 
 11. **Write `99-key-decisions.md`** as the spec set stabilises. Each entry: D-id, decision, alternatives considered, the *why*, and a reverse pointer to the spec sections that depend on it. When a future reviewer asks "why this?" — point them here, not to a chat scrollback.
 
@@ -173,6 +242,10 @@ One paragraph: what this subsystem owns, what it does not own, why it exists sep
 
 The public types / traits / functions / wire shapes. Code-shaped where possible.
 
+## 2a. Architecture / flow diagrams
+
+Add concise boxed ASCII-style diagrams for any non-trivial component boundary, data flow, processing pipeline, state transition, or dependency relationship this subsystem owns. Prefer diagrams with enough structure to expose reviewable decisions: nested boxes for components and ownership boundaries, labeled arrows for message/data movement, and side branches for failures, retries, shutdown, or backpressure. Use sequence-style lifelines for ordered request/protocol flows where the exact step order is the contract.
+
 ## 3. Invariants
 
 The properties that must hold at every observable point. Each invariant has a test or lint that pins it.
@@ -197,15 +270,29 @@ The non-trivial cases — error paths, edge cases, concurrent / async behaviour,
 
 ## 0. Principles
 
-- **Always shippable.** Every milestone leaves the workspace green on the standard quality gates.
+- **Always shippable.** Every milestone leaves the touched surfaces green on the relevant quality gates.
 - **Type-safety / contract-safety first.** Each milestone may defer features but never relaxes guarantees.
 - **Honest calibration.** Estimates are realistic; pad explicitly for review/on-call/meeting overhead.
 
 ## 1. Build-order graph
 
 ```text
-00-prd → 10-data-model → 11-runtime → 12-… → 20-… → 30-… → 40-… → 50-…
-                                  ↘ 60/61/70/71/72 (cross-cuts)
+┌──────────┐    ┌────────────────┐    ┌────────────────────┐
+│ 00 PRD   │───▶│ 10 Data Model  │───▶│ 11 Runtime Core    │
+│ goals    │    │ invariants     │    │ lifecycle / traits │
+└──────────┘    └───────┬────────┘    └─────────┬──────────┘
+                        │                       │
+                        ▼                       ▼
+                ┌────────────────┐    ┌────────────────────┐
+                │ 12 Foundation  │───▶│ 20 Integration     │
+                │ contracts      │    │ transport / sink   │
+                └───────┬────────┘    └─────────┬──────────┘
+                        │                       │
+                        ▼                       ▼
+                ┌────────────────┐    ┌────────────────────┐
+                │ 60/61 DX       │    │ 70/71/72 Gates     │
+                │ crates/features│    │ security/perf/test │
+                └────────────────┘    └────────────────────┘
 ```
 
 ## 2. Milestones
@@ -255,6 +342,8 @@ The spine in strict dependency order. Each row blocks everything underneath.
 | 1.1 | …    | …    | …      |
 
 **Exit criteria**: <test> passes; <bench> is within budget; <invariant> verified.
+
+**Verification**: <commands or manual checks scoped to this phase's changed surfaces; use Rust build/test/fmt/clippy only for Rust-affecting changes>.
 
 ## 5+ Phase 2 … Phase N
 
